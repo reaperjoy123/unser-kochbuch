@@ -1,0 +1,164 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface Recipe {
+  id: number;
+  title: string;
+  ingredients: string;
+  instructions: string;
+}
+
+export default function App() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [search, setSearch] = useState("");
+  const [newRecipe, setNewRecipe] = useState({ title: "", ingredients: "", instructions: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Rezepte aus localStorage laden
+  useEffect(() => {
+    const saved = localStorage.getItem("recipes");
+    if (saved) {
+      setRecipes(JSON.parse(saved));
+    }
+  }, []);
+
+  // Änderungen im localStorage speichern
+  useEffect(() => {
+    localStorage.setItem("recipes", JSON.stringify(recipes));
+  }, [recipes]);
+
+  // Rezept hinzufügen oder aktualisieren
+  const saveRecipe = () => {
+    if (!newRecipe.title.trim()) return;
+
+    if (editingId) {
+      // Update
+      setRecipes(recipes.map(r => r.id === editingId ? { ...r, ...newRecipe } : r));
+      setEditingId(null);
+    } else {
+      // Neues Rezept
+      const recipe: Recipe = { id: Date.now(), ...newRecipe };
+      setRecipes([...recipes, recipe]);
+    }
+
+    setNewRecipe({ title: "", ingredients: "", instructions: "" });
+  };
+
+  // Rezept löschen
+  const deleteRecipe = (id: number) => {
+    setRecipes(recipes.filter(r => r.id !== id));
+  };
+
+  // Rezept bearbeiten
+  const editRecipe = (recipe: Recipe) => {
+    setNewRecipe({
+      title: recipe.title,
+      ingredients: recipe.ingredients,
+      instructions: recipe.instructions,
+    });
+    setEditingId(recipe.id);
+    window.scrollTo({ top: 0, behavior: "smooth" }); // nach oben scrollen zum Formular
+  };
+
+  const filtered = recipes.filter(r =>
+    r.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-white to-pink-200 p-6">
+      <h1 className="text-4xl font-bold text-center mb-6">🍲 Unser Kochbuch</h1>
+
+      {/* Suche */}
+      <input
+        type="text"
+        placeholder="Rezepte durchsuchen..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        className="w-full p-3 mb-6 rounded-2xl border shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+      />
+
+      {/* Formular für Rezept */}
+      <div className="bg-white shadow rounded-2xl p-4 mb-6">
+        <h2 className="text-xl font-semibold mb-3">
+          {editingId ? "Rezept bearbeiten" : "Neues Rezept"}
+        </h2>
+        <input
+          className="w-full p-2 mb-2 border rounded-xl"
+          placeholder="Titel"
+          value={newRecipe.title}
+          onChange={e => setNewRecipe({ ...newRecipe, title: e.target.value })}
+        />
+        <textarea
+          className="w-full p-2 mb-2 border rounded-xl"
+          placeholder="Zutaten"
+          value={newRecipe.ingredients}
+          onChange={e => setNewRecipe({ ...newRecipe, ingredients: e.target.value })}
+        />
+        <textarea
+          className="w-full p-2 mb-2 border rounded-xl"
+          placeholder="Anleitung"
+          value={newRecipe.instructions}
+          onChange={e => setNewRecipe({ ...newRecipe, instructions: e.target.value })}
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={saveRecipe}
+            className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-xl"
+          >
+            {editingId ? "Aktualisieren" : "Speichern"}
+          </button>
+          {editingId && (
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setNewRecipe({ title: "", ingredients: "", instructions: "" });
+              }}
+              className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-xl"
+            >
+              Abbrechen
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Rezeptliste */}
+      <AnimatePresence>
+        <div className="grid md:grid-cols-2 gap-4">
+          {filtered.map(recipe => (
+            <motion.div
+              key={recipe.id}
+              layout
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-white shadow-md rounded-2xl p-4"
+            >
+              <h3 className="text-lg font-bold mb-2">{recipe.title}</h3>
+              <p className="text-sm text-gray-600 mb-1">
+                <strong>Zutaten:</strong> {recipe.ingredients}
+              </p>
+              <p className="text-sm text-gray-600 mb-3">
+                <strong>Zubereitung:</strong> {recipe.instructions}
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => editRecipe(recipe)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-xl text-sm"
+                >
+                  Bearbeiten
+                </button>
+                <button
+                  onClick={() => deleteRecipe(recipe.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl text-sm"
+                >
+                  Löschen
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </AnimatePresence>
+    </div>
+  );
+}
