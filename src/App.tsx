@@ -1,11 +1,12 @@
-import { useState, ChangeEvent } from "react";
+import { useState } from "react";
+import type { ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Recipe {
   id: number;
   title: string;
   description: string;
-  image?: string; // Base64 oder URL
+  image?: string;
 }
 
 function App() {
@@ -18,35 +19,28 @@ function App() {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  // ✅ neues Rezept speichern
+  // ✅ Rezept speichern oder bearbeiten
   const handleAddRecipe = () => {
     if (!newRecipe.title.trim()) return;
 
     if (editingId) {
-      // Bearbeiten
       setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === editingId ? { ...r, ...newRecipe } : r
-        )
+        prev.map((r) => (r.id === editingId ? { ...r, ...newRecipe } : r))
       );
       setEditingId(null);
     } else {
-      // Neu hinzufügen
-      setRecipes((prev) => [
-        ...prev,
-        { id: Date.now(), ...newRecipe },
-      ]);
+      setRecipes((prev) => [...prev, { id: Date.now(), ...newRecipe }]);
     }
 
     setNewRecipe({ title: "", description: "", image: undefined });
   };
 
-  // ✅ Rezept löschen
+  // ✅ Löschen
   const handleDeleteRecipe = (id: number) => {
     setRecipes((prev) => prev.filter((r) => r.id !== id));
   };
 
-  // ✅ Rezept bearbeiten
+  // ✅ Bearbeiten
   const handleEditRecipe = (id: number) => {
     const recipe = recipes.find((r) => r.id === id);
     if (recipe) {
@@ -59,7 +53,7 @@ function App() {
     }
   };
 
-  // ✅ Bild-Upload mit Komprimierung & fester Größe (200x200)
+  // ✅ Bild hochladen mit Kompression
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -73,27 +67,25 @@ function App() {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Feste Größe
         const size = 200;
         canvas.width = size;
         canvas.height = size;
 
-        // Bild zentriert zuschneiden
         const aspect = img.width / img.height;
-        let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+        let sx = 0,
+          sy = 0,
+          sWidth = img.width,
+          sHeight = img.height;
 
         if (aspect > 1) {
-          // Querformat
           sWidth = img.height;
           sx = (img.width - img.height) / 2;
         } else {
-          // Hochformat
           sHeight = img.width;
           sy = (img.height - img.width) / 2;
         }
 
         ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, size, size);
-
         const compressed = canvas.toDataURL("image/jpeg", 0.7);
         setNewRecipe((prev) => ({ ...prev, image: compressed }));
       };
