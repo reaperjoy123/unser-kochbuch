@@ -34,7 +34,7 @@ function App() {
   };
 
   // 📤  Export-Funktion
-  const handleExport = () => {
+  const exportRecipes = () => {
     const dataStr = JSON.stringify(recipes, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
