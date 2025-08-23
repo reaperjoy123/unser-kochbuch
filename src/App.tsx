@@ -33,18 +33,23 @@ function App() {
     setNewRecipe({ title: "", ingredients: "", instructions: "" });
   };
 
-  // 📤 Export: Rezepte als JSON-Datei herunterladen
-  const exportRecipes = () => {
+  // 📤  Export-Funktion
+  const handleExport = () => {
     const dataStr = JSON.stringify(recipes, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "kochbuch.json";
-    a.click();
-
+    // Datei heißt IMMER "unser-kochbuch.json"
+	const link = document.createElement("a");
+    link.href = url;
+    link.download = "unser-kochbuch.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
+	
+	// Hinweis einblenden
+	alert("Dein Kochbuch wurde als 'unser-kochbuch.json' im Download-Ordner gespeichert.\nDu kannst es jetzt über WhatsApp oder andere Apps weiterleiten.");
   };
 
   // 📥 Import: JSON-Datei einlesen
