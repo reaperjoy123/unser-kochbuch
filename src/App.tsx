@@ -57,7 +57,9 @@ function App() {
       try {
         const imported = JSON.parse(event.target?.result as string);
         if (Array.isArray(imported)) {
-          setRecipes(imported);
+		  // ❌ Lokale Rezepte komplett leeren und mit neuen überschreiben
+		  setRecipes(imported);
+		  alert("Rezepte erfolgreich importiert!");
         } else {
           alert("Ungültiges Format!");
         }
@@ -66,6 +68,9 @@ function App() {
       }
     };
     reader.readAsText(file);
+	
+	// Damit man die gleiche Datei nochmal wählen kann
+	e.target.value = "";
   };
 
   return (
