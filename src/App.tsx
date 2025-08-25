@@ -1,70 +1,95 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 
+// 🔹 Rezept-Typ inkl. Bild (als Base64)
 type Recipe = {
-  id: number;
   title: string;
   ingredients: string;
   instructions: string;
+  image?: string; // Base64-Bild
 };
 
 function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [title, setTitle] = useState("");
-  const [ingredients, setIngredients] = useState("");
-  const [instructions, setInstructions] = useState("");
+  const [newRecipe, setNewRecipe] = useState<Recipe>({
+    title: "",
+    ingredients: "",
+    instructions: "",
+    image: undefined,
+  });
   const [showForm, setShowForm] = useState(false);
 
-  // Lade gespeicherte Rezepte
+  // Rezepte aus localStorage laden
   useEffect(() => {
     const saved = localStorage.getItem("recipes");
-    if (saved) {
-      setRecipes(JSON.parse(saved));
-    }
+    if (saved) setRecipes(JSON.parse(saved));
   }, []);
 
-  // Speichere Rezepte bei Änderungen
+  // Rezepte in localStorage speichern
   useEffect(() => {
     localStorage.setItem("recipes", JSON.stringify(recipes));
   }, [recipes]);
 
-  // Rezept hinzufügen
+  // 🔹 Rezept hinzufügen
   const addRecipe = () => {
-    if (!title.trim() || !ingredients.trim() || !instructions.trim()) return;
-
-    const newRecipe: Recipe = {
-      id: Date.now(),
-      title,
-      ingredients,
-      instructions,
-    };
-
     setRecipes([...recipes, newRecipe]);
-    setTitle("");
-    setIngredients("");
-    setInstructions("");
-    setShowForm(false); // Formular nach Speichern wieder ausblenden
+    setNewRecipe({ title: "", ingredients: "", instructions: "", image: undefined });
+    setShowForm(false);
   };
 
-  // Rezept löschen
-  const deleteRecipe = (id: number) => {
-    setRecipes(recipes.filter((r) => r.id !== id));
+  // 🔹 Bild komprimieren + als Base64 speichern
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxSize = 800; // maximale Kantenlänge
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7); // 70% Qualität
+        setNewRecipe({ ...newRecipe, image: compressedBase64 });
+      };
+    };
+    reader.readAsDataURL(file);
   };
 
-  // Rezepte exportieren
+  // 🔹 Rezepte exportieren
   const exportRecipes = () => {
-    const blob = new Blob([JSON.stringify(recipes, null, 2)], {
-      type: "application/json",
-    });
+    const dataStr = JSON.stringify(recipes, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = "unser-kochbuch.json"; // Fester Dateiname
+    a.download = "unser-kochbuch.json";
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Rezepte importieren
-  const importRecipes = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 🔹 Rezepte importieren
+  const importRecipes = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -72,72 +97,33 @@ function App() {
     reader.onload = (event) => {
       try {
         const imported = JSON.parse(event.target?.result as string);
-        if (Array.isArray(imported)) {
-          setRecipes(imported);
-        }
-      } catch (error) {
-        alert("Ungültige Datei!");
+        setRecipes(imported); // ersetzt alte Rezepte
+      } catch (err) {
+        alert("Fehler beim Import der Datei!");
       }
     };
     reader.readAsText(file);
-
-    // Eingabefeld zurücksetzen
-    e.target.value = "";
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">📖 Unser Kochbuch</h1>
+    <div className="p-6 max-w-2xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">📖 Unser Kochbuch</h1>
 
-      {/* Button für Formular */}
-      <button
-        onClick={() => setShowForm(!showForm)}
-        className="bg-blue-500 text-white px-3 py-1 rounded mb-4"
-      >
-        {showForm ? "Abbrechen" : "Rezept hinzufügen"}
-      </button>
-
-      {/* Formular nur wenn showForm === true */}
-      {showForm && (
-        <div className="space-y-2 mb-4">
-          <input
-            type="text"
-            placeholder="Titel"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="border p-2 w-full rounded"
-          />
-          <textarea
-            placeholder="Zutaten"
-            value={ingredients}
-            onChange={(e) => setIngredients(e.target.value)}
-            className="border p-2 w-full rounded"
-          />
-          <textarea
-            placeholder="Anleitung"
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-            className="border p-2 w-full rounded"
-          />
-          <button
-            onClick={addRecipe}
-            className="bg-green-500 text-white px-3 py-1 rounded"
-          >
-            Speichern
-          </button>
-        </div>
-      )}
-
-      {/* Export & Import */}
-      <div className="flex gap-2 mb-4">
+      <div className="mb-6 flex gap-3">
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          ➕ Rezept hinzufügen
+        </button>
         <button
           onClick={exportRecipes}
-          className="bg-purple-500 text-white px-3 py-1 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
-          Exportieren
+          📤 Exportieren
         </button>
-        <label className="bg-orange-500 text-white px-3 py-1 rounded cursor-pointer">
-          Importieren
+        <label className="bg-purple-600 text-white px-4 py-2 rounded cursor-pointer">
+          📥 Importieren
           <input
             type="file"
             accept="application/json"
@@ -147,28 +133,62 @@ function App() {
         </label>
       </div>
 
-      {/* Rezeptliste */}
-      <div className="space-y-4">
-        {recipes.map((recipe) => (
-          <div
-            key={recipe.id}
-            className="border rounded p-3 shadow flex justify-between items-start"
+      {/* Formular für neues Rezept */}
+      {showForm && (
+        <div className="mb-6 p-4 border rounded">
+          <input
+            type="text"
+            placeholder="Titel"
+            value={newRecipe.title}
+            onChange={(e) =>
+              setNewRecipe({ ...newRecipe, title: e.target.value })
+            }
+            className="border p-2 w-full mb-2"
+          />
+          <textarea
+            placeholder="Zutaten"
+            value={newRecipe.ingredients}
+            onChange={(e) =>
+              setNewRecipe({ ...newRecipe, ingredients: e.target.value })
+            }
+            className="border p-2 w-full mb-2"
+          />
+          <textarea
+            placeholder="Anleitung"
+            value={newRecipe.instructions}
+            onChange={(e) =>
+              setNewRecipe({ ...newRecipe, instructions: e.target.value })
+            }
+            className="border p-2 w-full mb-2"
+          />
+          <input type="file" accept="image/*" onChange={handleImageUpload} />
+          <button
+            onClick={addRecipe}
+            className="bg-green-600 text-white px-4 py-2 rounded mt-3"
           >
-            <div>
-              <h2 className="font-semibold text-lg">{recipe.title}</h2>
-              <p className="text-sm text-gray-600 whitespace-pre-line">
-                {recipe.ingredients}
-              </p>
-              <p className="text-sm whitespace-pre-line">
-                {recipe.instructions}
-              </p>
-            </div>
-            <button
-              onClick={() => deleteRecipe(recipe.id)}
-              className="text-red-500 ml-4"
-            >
-              ❌
-            </button>
+            Speichern
+          </button>
+        </div>
+      )}
+
+      {/* Anzeige der Rezepte */}
+      <div className="space-y-4">
+        {recipes.map((recipe, index) => (
+          <div key={index} className="border p-4 rounded">
+            <h2 className="text-xl font-semibold">{recipe.title}</h2>
+            {recipe.image && (
+              <img
+                src={recipe.image}
+                alt={recipe.title}
+                className="w-full max-h-64 object-cover rounded my-2"
+              />
+            )}
+            <p className="mt-2">
+              <strong>Zutaten:</strong> {recipe.ingredients}
+            </p>
+            <p>
+              <strong>Anleitung:</strong> {recipe.instructions}
+            </p>
           </div>
         ))}
       </div>
