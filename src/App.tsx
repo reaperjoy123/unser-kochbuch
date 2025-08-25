@@ -47,7 +47,7 @@ function App() {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const maxSize = 800; // maximale Kantenlänge
+        const maxSize = 300; // maximale Kantenlänge
         let width = img.width;
         let height = img.height;
 
