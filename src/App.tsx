@@ -1,11 +1,10 @@
 import { useState, useEffect, ChangeEvent } from "react";
 
-// 🔹 Rezept-Typ inkl. Bild (als Base64)
 type Recipe = {
   title: string;
   ingredients: string;
   instructions: string;
-  image?: string; // Base64-Bild
+  image?: string;
 };
 
 function App() {
@@ -18,50 +17,43 @@ function App() {
   });
   const [showForm, setShowForm] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState(""); // 🔍 Suchbegriff
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null); // 🔹 Detailansicht
 
-  // Rezepte aus localStorage laden
   useEffect(() => {
     const saved = localStorage.getItem("recipes");
     if (saved) setRecipes(JSON.parse(saved));
   }, []);
 
-  // Rezepte in localStorage speichern
   useEffect(() => {
     localStorage.setItem("recipes", JSON.stringify(recipes));
   }, [recipes]);
 
-  // 🔹 Rezept speichern (neu oder bearbeiten)
   const saveRecipe = () => {
     if (editIndex !== null) {
-      // Bearbeiten
       const updated = [...recipes];
       updated[editIndex] = newRecipe;
       setRecipes(updated);
       setEditIndex(null);
     } else {
-      // Neu hinzufügen
       setRecipes([...recipes, newRecipe]);
     }
     setNewRecipe({ title: "", ingredients: "", instructions: "", image: undefined });
     setShowForm(false);
   };
 
-  // 🔹 Rezept bearbeiten
   const editRecipe = (index: number) => {
     setNewRecipe(recipes[index]);
     setEditIndex(index);
     setShowForm(true);
   };
 
-  // 🔹 Rezept löschen
   const deleteRecipe = (index: number) => {
     if (confirm("Willst du dieses Rezept wirklich löschen?")) {
       setRecipes(recipes.filter((_, i) => i !== index));
     }
   };
 
-  // 🔹 Bild komprimieren + als Base64 speichern
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -72,7 +64,7 @@ function App() {
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const maxSize = 300; // ⚡ jetzt 300px
+        const maxSize = 300;
         let width = img.width;
         let height = img.height;
 
@@ -93,14 +85,13 @@ function App() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
 
-        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7); // 70% Qualität
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
         setNewRecipe({ ...newRecipe, image: compressedBase64 });
       };
     };
     reader.readAsDataURL(file);
   };
 
-  // 🔹 Rezepte exportieren
   const exportRecipes = () => {
     const dataStr = JSON.stringify(recipes, null, 2);
     const blob = new Blob([dataStr], { type: "application/json" });
@@ -113,7 +104,6 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // 🔹 Rezepte importieren
   const importRecipes = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -122,7 +112,7 @@ function App() {
     reader.onload = (event) => {
       try {
         const imported = JSON.parse(event.target?.result as string);
-        setRecipes(imported); // ersetzt alte Rezepte
+        setRecipes(imported);
       } catch (err) {
         alert("Fehler beim Import der Datei!");
       }
@@ -130,7 +120,6 @@ function App() {
     reader.readAsText(file);
   };
 
-  // 🔹 Filter für Suche anwenden
   const filteredRecipes = recipes.filter(
     (r) =>
       r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,122 +130,131 @@ function App() {
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">📖 Unser Kochbuch</h1>
 
-      <div className="mb-6 flex flex-wrap gap-3">
-        <button
-          onClick={() => {
-            setShowForm(!showForm);
-            setEditIndex(null);
-            setNewRecipe({ title: "", ingredients: "", instructions: "", image: undefined });
-          }}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          ➕ Rezept hinzufügen
-        </button>
-        <button
-          onClick={exportRecipes}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          📤 Exportieren
-        </button>
-        <label className="bg-purple-600 text-white px-4 py-2 rounded cursor-pointer">
-          📥 Importieren
-          <input
-            type="file"
-            accept="application/json"
-            onChange={importRecipes}
-            className="hidden"
-          />
-        </label>
-        {/* 🔍 Suchfeld */}
-        <input
-          type="text"
-          placeholder="🔍 Rezept suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="border p-2 flex-1 min-w-[200px]"
-        />
-      </div>
-
-      {/* Formular für neues Rezept / Bearbeiten */}
-      {showForm && (
-        <div className="mb-6 p-4 border rounded">
-          <input
-            type="text"
-            placeholder="Titel"
-            value={newRecipe.title}
-            onChange={(e) =>
-              setNewRecipe({ ...newRecipe, title: e.target.value })
-            }
-            className="border p-2 w-full mb-2"
-          />
-          <textarea
-            placeholder="Zutaten"
-            value={newRecipe.ingredients}
-            onChange={(e) =>
-              setNewRecipe({ ...newRecipe, ingredients: e.target.value })
-            }
-            className="border p-2 w-full mb-2"
-          />
-          <textarea
-            placeholder="Anleitung"
-            value={newRecipe.instructions}
-            onChange={(e) =>
-              setNewRecipe({ ...newRecipe, instructions: e.target.value })
-            }
-            className="border p-2 w-full mb-2"
-          />
-          <input type="file" accept="image/*" onChange={handleImageUpload} />
+      {/* Wenn ein Rezept geöffnet wurde → Detailansicht */}
+      {selectedRecipe ? (
+        <div className="p-4 border rounded">
           <button
-            onClick={saveRecipe}
-            className="bg-green-600 text-white px-4 py-2 rounded mt-3"
+            onClick={() => setSelectedRecipe(null)}
+            className="bg-gray-500 text-white px-3 py-1 rounded mb-4"
           >
-            {editIndex !== null ? "Änderungen speichern" : "Speichern"}
+            ⬅️ Zurück
           </button>
+          <h2 className="text-2xl font-bold">{selectedRecipe.title}</h2>
+          {selectedRecipe.image && (
+            <img
+              src={selectedRecipe.image}
+              alt={selectedRecipe.title}
+              className="w-full max-h-64 object-cover rounded my-3"
+            />
+          )}
+          <p>
+            <strong>Zutaten:</strong> {selectedRecipe.ingredients}
+          </p>
+          <p className="mt-2">
+            <strong>Anleitung:</strong> {selectedRecipe.instructions}
+          </p>
         </div>
-      )}
-
-      {/* Anzeige der Rezepte */}
-      <div className="space-y-4">
-        {filteredRecipes.map((recipe, index) => (
-          <div key={index} className="border p-4 rounded relative">
-            <h2 className="text-xl font-semibold">{recipe.title}</h2>
-            {recipe.image && (
-              <img
-                src={recipe.image}
-                alt={recipe.title}
-                className="w-full max-h-64 object-cover rounded my-2"
+      ) : (
+        <>
+          {/* Buttons + Suche nur auf Startseite */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            <button
+              onClick={() => {
+                setShowForm(!showForm);
+                setEditIndex(null);
+                setNewRecipe({ title: "", ingredients: "", instructions: "", image: undefined });
+              }}
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              ➕ Rezept hinzufügen
+            </button>
+            <button
+              onClick={exportRecipes}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              📤 Exportieren
+            </button>
+            <label className="bg-purple-600 text-white px-4 py-2 rounded cursor-pointer">
+              📥 Importieren
+              <input
+                type="file"
+                accept="application/json"
+                onChange={importRecipes}
+                className="hidden"
               />
-            )}
-            <p className="mt-2">
-              <strong>Zutaten:</strong> {recipe.ingredients}
-            </p>
-            <p>
-              <strong>Anleitung:</strong> {recipe.instructions}
-            </p>
+            </label>
+            <input
+              type="text"
+              placeholder="🔍 Rezept suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border p-2 flex-1 min-w-[200px]"
+            />
+          </div>
 
-            {/* Aktionen: Bearbeiten & Löschen */}
-            <div className="mt-3 flex gap-3">
+          {showForm && (
+            <div className="mb-6 p-4 border rounded">
+              <input
+                type="text"
+                placeholder="Titel"
+                value={newRecipe.title}
+                onChange={(e) =>
+                  setNewRecipe({ ...newRecipe, title: e.target.value })
+                }
+                className="border p-2 w-full mb-2"
+              />
+              <textarea
+                placeholder="Zutaten"
+                value={newRecipe.ingredients}
+                onChange={(e) =>
+                  setNewRecipe({ ...newRecipe, ingredients: e.target.value })
+                }
+                className="border p-2 w-full mb-2"
+              />
+              <textarea
+                placeholder="Anleitung"
+                value={newRecipe.instructions}
+                onChange={(e) =>
+                  setNewRecipe({ ...newRecipe, instructions: e.target.value })
+                }
+                className="border p-2 w-full mb-2"
+              />
+              <input type="file" accept="image/*" onChange={handleImageUpload} />
               <button
-                onClick={() => editRecipe(index)}
-                className="bg-yellow-500 text-white px-3 py-1 rounded"
+                onClick={saveRecipe}
+                className="bg-green-600 text-white px-4 py-2 rounded mt-3"
               >
-                ✏️ Bearbeiten
-              </button>
-              <button
-                onClick={() => deleteRecipe(index)}
-                className="bg-red-600 text-white px-3 py-1 rounded"
-              >
-                🗑️ Löschen
+                {editIndex !== null ? "Änderungen speichern" : "Speichern"}
               </button>
             </div>
-          </div>
-        ))}
+          )}
 
-        {/* Falls nichts gefunden wird */}
-        {filteredRecipes.length === 0 && (
-          <p className="text-gray-500">Keine Rezepte gefunden.</p>
-        )}
-      </div>
+          {/* Galerie-Ansicht */}
+          <div className="grid grid-cols-2 gap-4">
+            {filteredRecipes.map((recipe, index) => (
+              <div
+                key={index}
+                className="border rounded p-2 cursor-pointer hover:shadow-lg"
+                onClick={() => setSelectedRecipe(recipe)}
+              >
+                {recipe.image && (
+                  <img
+                    src={recipe.image}
+                    alt={recipe.title}
+                    className="w-full h-32 object-cover rounded"
+                  />
+                )}
+                <h3 className="text-lg font-semibold mt-2 text-center">
+                  {recipe.title}
+                </h3>
+              </div>
+            ))}
+            {filteredRecipes.length === 0 && (
+              <p className="text-gray-500">Keine Rezepte gefunden.</p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
