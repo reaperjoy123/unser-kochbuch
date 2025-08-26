@@ -151,11 +151,7 @@ export default function App() {
         <>
           <div className="flex gap-2 mb-4">
             <button
-              onClick={() => {
-			    setNewRecipe({ title: "", ingredients: "", instructions: "" }) // 🔹 leeres Formular
-				setEditIndex(null)
-			    setShowForm(true)
-			  }}
+              onClick={() => setShowForm(true)}
               className="bg-green-500 text-white px-4 py-2 rounded"
             >
               Rezept hinzufügen
