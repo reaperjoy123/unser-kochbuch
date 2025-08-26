@@ -158,7 +158,7 @@ export default function App() {
 
           <div className="flex gap-2 mt-4">
             <button
-              onClick={() =>
+              onClick={() => {
 			    const index = recipes.findIndex((r) => r === selectedRecipe);
 				if (index !== -1) {
 				  setEditIndex(index);
