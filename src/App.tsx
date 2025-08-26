@@ -232,9 +232,6 @@ export default function App() {
             >
               💾 Änderungen speichern
             </button>
-            <button
-              onClick={() => setEditIndex(null)}
-              className="bg-gray-500 text-white px-4 py-2 rounded"
 			<button
 			  onClick={() => {
 			    if (editIndex !== null) {
