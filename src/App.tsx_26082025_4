@@ -154,13 +154,9 @@ export default function App() {
             />
           )}
           <h3 className="font-semibold">📝 Zutaten</h3>
-          <p className="mt-2 whitespace-pre-line">
-		    {selectedRecipe.ingredients}
-		  </p>
+          <p className="mb-2 whitespace-pre-line">{selectedRecipe.ingredients}</p>
           <h3 className="font-semibold">👩‍🍳 Anleitung</h3>
-          <p className="mt-2 whitespace-pre-line">
-		    {selectedRecipe.instructions}
-		  </p>
+          <p className="whitespace-pre-line">{selectedRecipe.instructions}</p>
 
           <div className="flex gap-2 mt-4">
             <button
