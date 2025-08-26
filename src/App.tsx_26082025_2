@@ -87,12 +87,10 @@ export default function App() {
 
   // 🔹 Rezept löschen
   const deleteRecipe = (index: number) => {
-    if (window.confirm("Soll dieses Rezept wirklich gelöscht werden?")) {
-      const updated = [...recipes];
-      updated.splice(index, 1);
-      setRecipes(updated);
-      setSelectedRecipe(null);
-	}
+    const updated = [...recipes];
+    updated.splice(index, 1);
+    setRecipes(updated);
+    setSelectedRecipe(null);
   };
 
   // 🔹 Importieren (alte Rezepte werden überschrieben)
@@ -152,20 +150,17 @@ export default function App() {
             />
           )}
           <h3 className="font-semibold">📝 Zutaten</h3>
-          <p className="mb-2 whitespace-pre-line">{selectedRecipe.ingredients}</p>
+          <p className="mb-2 whitespace-pre-line">
+            {selectedRecipe.ingredients}
+          </p>
           <h3 className="font-semibold">👩‍🍳 Anleitung</h3>
           <p className="whitespace-pre-line">{selectedRecipe.instructions}</p>
 
           <div className="flex gap-2 mt-4">
             <button
               onClick={() =>
-			    const index = recipes.findIndex((r) => r === selectedRecipe);
-				if (index !== -1) {
-				  setEditIndex(index);
-				  setNewRecipe(recipes[index]); // ✅ bestehendes Rezept in Formular laden
-				  setSelectedRecipe(null);      // ✅ Detailansicht schließen
-				}
-			  }}
+                setEditIndex(recipes.findIndex((r) => r === selectedRecipe))
+              }
               className="bg-yellow-500 text-white px-4 py-2 rounded"
             >
               ✏️ Bearbeiten
@@ -216,13 +211,6 @@ export default function App() {
             className="border p-2 w-full mb-2"
           />
           <input type="file" accept="image/*" onChange={handleImageUpload} />
-		  {newRecipe.image && (
-		    <img
-			  src={newRecipe.image}
-			  alt="Preview"
-			  className="w-full h-32 object-cover mt-2 rounded"
-			/>
-		  )}
           <div className="flex gap-3 mt-3">
             <button
               onClick={saveRecipe}
