@@ -1,11 +1,12 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import "./App.css";
 
-type Recipe = {
+interface Recipe {
   title: string;
   ingredients: string;
   instructions: string;
-  image?: string;
-};
+  image?: string; // Base64 Bild
+}
 
 function App() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -13,264 +14,244 @@ function App() {
     title: "",
     ingredients: "",
     instructions: "",
-    image: "",
   });
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
-  // Rezepte beim Start laden
+  const ingredientsRef = useRef<HTMLTextAreaElement>(null);
+  const instructionsRef = useRef<HTMLTextAreaElement>(null);
+
+  // ✅ Rezepte aus localStorage laden
   useEffect(() => {
-    const storedRecipes = localStorage.getItem("recipes");
-    if (storedRecipes) {
-      setRecipes(JSON.parse(storedRecipes));
+    const stored = localStorage.getItem("recipes");
+    if (stored) {
+      setRecipes(JSON.parse(stored));
     }
   }, []);
 
-  // Rezepte im localStorage sichern
+  // ✅ Rezepte in localStorage speichern
   useEffect(() => {
     localStorage.setItem("recipes", JSON.stringify(recipes));
   }, [recipes]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setNewRecipe({ ...newRecipe, [e.target.name]: e.target.value });
-  };
-
-  // ✅ Bild-Upload mit Crop (400×300, zentriert)
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const targetWidth = 400;
-          const targetHeight = 300;
-          const canvas = document.createElement("canvas");
-          canvas.width = targetWidth;
-          canvas.height = targetHeight;
-          const ctx = canvas.getContext("2d");
-
-          if (!ctx) return;
-
-          const scale = Math.max(
-            targetWidth / img.width,
-            targetHeight / img.height
-          );
-          const scaledWidth = img.width * scale;
-          const scaledHeight = img.height * scale;
-
-          const offsetX = (targetWidth - scaledWidth) / 2;
-          const offsetY = (targetHeight - scaledHeight) / 2;
-
-          ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
-
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          setNewRecipe({ ...newRecipe, image: dataUrl });
-        };
-      };
-      reader.readAsDataURL(file);
+  // ✅ Textarea automatisch an Inhalt anpassen
+  useEffect(() => {
+    if (ingredientsRef.current) {
+      ingredientsRef.current.style.height = "auto";
+      ingredientsRef.current.style.height =
+        ingredientsRef.current.scrollHeight + "px";
     }
+    if (instructionsRef.current) {
+      instructionsRef.current.style.height = "auto";
+      instructionsRef.current.style.height =
+        instructionsRef.current.scrollHeight + "px";
+    }
+  }, [newRecipe]);
+
+  // ✅ Bild laden + crop auf 400x300
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const targetWidth = 400;
+        const targetHeight = 300;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // crop mittig
+        const aspectTarget = targetWidth / targetHeight;
+        const aspectImg = img.width / img.height;
+
+        let sx = 0,
+          sy = 0,
+          sWidth = img.width,
+          sHeight = img.height;
+
+        if (aspectImg > aspectTarget) {
+          // Bild zu breit → seitlich beschneiden
+          sWidth = img.height * aspectTarget;
+          sx = (img.width - sWidth) / 2;
+        } else {
+          // Bild zu hoch → oben/unten beschneiden
+          sHeight = img.width / aspectTarget;
+          sy = (img.height - sHeight) / 2;
+        }
+
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+
+        const compressed = canvas.toDataURL("image/jpeg", 0.8);
+        setNewRecipe({ ...newRecipe, image: compressed });
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // ✅ Rezept hinzufügen oder bearbeiten
+  const addOrUpdateRecipe = () => {
+    if (!newRecipe.title.trim()) return;
+
     if (editIndex !== null) {
       const updated = [...recipes];
       updated[editIndex] = newRecipe;
       setRecipes(updated);
-      setSelectedRecipe(newRecipe); // nach dem Speichern im Rezept bleiben
       setEditIndex(null);
+      setSelectedRecipe(newRecipe); // bleibt im Rezept
     } else {
       setRecipes([...recipes, newRecipe]);
+      setSelectedRecipe(newRecipe); // direkt anzeigen
     }
-    setNewRecipe({ title: "", ingredients: "", instructions: "", image: "" });
+
+    setNewRecipe({ title: "", ingredients: "", instructions: "" });
     setShowForm(false);
   };
 
-  const handleDelete = (index: number) => {
-    if (window.confirm("Möchtest du dieses Rezept wirklich löschen?")) {
+  // ✅ Rezept löschen mit Bestätigung
+  const deleteRecipe = (index: number) => {
+    if (window.confirm("Willst du dieses Rezept wirklich löschen?")) {
       const updated = recipes.filter((_, i) => i !== index);
       setRecipes(updated);
       setSelectedRecipe(null);
     }
   };
 
+  // ✅ Export
   const exportRecipes = () => {
-    const dataStr = JSON.stringify(recipes, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "unser-kochbuch.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    const blob = new Blob([JSON.stringify(recipes)], {
+      type: "application/json",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "unser-kochbuch.json";
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
 
-  const importRecipes = (e: ChangeEvent<HTMLInputElement>) => {
+  // ✅ Import
+  const importRecipes = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
         const imported = JSON.parse(event.target?.result as string);
-        setRecipes(imported);
-        e.target.value = "";
+        if (Array.isArray(imported)) {
+          setRecipes(imported);
+        }
       } catch {
-        alert("Fehler beim Importieren der Datei!");
+        alert("Ungültige Datei!");
       }
     };
     reader.readAsText(file);
   };
 
-  const filteredRecipes = recipes.filter((r) =>
-    r.title.toLowerCase().includes(searchQuery.toLowerCase())
+  // ✅ Gefilterte Rezepte
+  const filtered = recipes.filter((r) =>
+    r.title.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>Unser Kochbuch</h1>
+    <div>
+      <header>
+        <img src="/logo.png" alt="Logo" />
+        <h1>Unser Kochbuch</h1>
+      </header>
 
-      {!showForm && !selectedRecipe && (
-        <>
-          <input
-            type="text"
-            placeholder="Suche nach Rezept..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ marginBottom: "10px", width: "100%", padding: "5px" }}
-          />
-          <button onClick={() => setShowForm(true)}>Rezept hinzufügen</button>
-          <button onClick={exportRecipes}>Exportieren</button>
-          <input
-            type="file"
-            accept="application/json"
-            onChange={importRecipes}
-            style={{ marginLeft: "10px" }}
-          />
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "10px",
-              marginTop: "20px",
-            }}
-          >
-            {filteredRecipes.map((recipe, index) => (
-              <div
-                key={index}
-                style={{
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  padding: "10px",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-                onClick={() => setSelectedRecipe(recipe)}
-              >
-                {recipe.image && (
-                  <img
-                    src={recipe.image}
-                    alt={recipe.title}
-                    style={{
-                      maxWidth: "100%",
-                      height: "auto",
-                      borderRadius: "5px",
-                    }}
-                  />
-                )}
-                <h3>{recipe.title}</h3>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          style={{ marginTop: "20px", display: "flex", flexDirection: "column" }}
+      {/* Toolbar */}
+      <div style={{ padding: "15px" }}>
+        <button
+          onClick={() => {
+            setShowForm(true);
+            setEditIndex(null);
+            setNewRecipe({ title: "", ingredients: "", instructions: "" });
+          }}
         >
+          Rezept hinzufügen
+        </button>
+        <button onClick={exportRecipes}>Exportieren</button>
+        <input
+          type="file"
+          accept="application/json"
+          onChange={importRecipes}
+          style={{ marginLeft: "10px" }}
+        />
+        <input
+          type="text"
+          placeholder="Suche..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ marginLeft: "10px", padding: "5px" }}
+        />
+      </div>
+
+      {/* Formular */}
+      {showForm && (
+        <div className="recipe-card">
           <input
             type="text"
-            name="title"
             placeholder="Titel"
             value={newRecipe.title}
-            onChange={handleChange}
-            required
+            onChange={(e) => setNewRecipe({ ...newRecipe, title: e.target.value })}
           />
           <textarea
-            name="ingredients"
+            ref={ingredientsRef}
             placeholder="Zutaten"
             value={newRecipe.ingredients}
-            onChange={handleChange}
-            rows={2}
+            onChange={(e) =>
+              setNewRecipe({ ...newRecipe, ingredients: e.target.value })
+            }
             style={{ resize: "none", overflow: "hidden" }}
-            onInput={(e) => {
-              e.currentTarget.style.height = "auto";
-              e.currentTarget.style.height = e.currentTarget.scrollHeight + "px";
-            }}
-            required
           />
           <textarea
-            name="instructions"
+            ref={instructionsRef}
             placeholder="Anleitung"
             value={newRecipe.instructions}
-            onChange={handleChange}
-            rows={2}
+            onChange={(e) =>
+              setNewRecipe({ ...newRecipe, instructions: e.target.value })
+            }
             style={{ resize: "none", overflow: "hidden" }}
-            onInput={(e) => {
-              e.currentTarget.style.height = "auto";
-              e.currentTarget.style.height = e.currentTarget.scrollHeight + "px";
-            }}
-            required
           />
           <input type="file" accept="image/*" onChange={handleImageUpload} />
-          <button type="submit">
-            {editIndex !== null ? "Änderungen speichern" : "Rezept hinzufügen"}
+          <button onClick={addOrUpdateRecipe}>
+            {editIndex !== null ? "Speichern" : "Hinzufügen"}
           </button>
           <button
-            type="button"
             onClick={() => {
               setShowForm(false);
               setEditIndex(null);
-              setNewRecipe({
-                title: "",
-                ingredients: "",
-                instructions: "",
-                image: "",
-              });
+              setNewRecipe({ title: "", ingredients: "", instructions: "" });
             }}
           >
             Abbrechen
           </button>
-        </form>
+        </div>
       )}
 
+      {/* Rezept-Detailansicht */}
       {selectedRecipe && !showForm && (
-        <div style={{ marginTop: "20px" }}>
+        <div className="recipe-card">
           <h2>{selectedRecipe.title}</h2>
           {selectedRecipe.image && (
             <img
               src={selectedRecipe.image}
               alt={selectedRecipe.title}
-              style={{ maxWidth: "100%", borderRadius: "5px" }}
+              style={{ width: "100%", borderRadius: "8px" }}
             />
           )}
           <h3>Zutaten</h3>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
-            {selectedRecipe.ingredients}
-          </pre>
+          <pre>{selectedRecipe.ingredients}</pre>
           <h3>Anleitung</h3>
-          <pre style={{ whiteSpace: "pre-wrap" }}>
-            {selectedRecipe.instructions}
-          </pre>
-
+          <pre>{selectedRecipe.instructions}</pre>
           <button
             onClick={() => {
               const index = recipes.findIndex((r) => r === selectedRecipe);
@@ -284,14 +265,36 @@ function App() {
             Bearbeiten
           </button>
           <button
-            onClick={() => {
-              const index = recipes.findIndex((r) => r === selectedRecipe);
-              if (index !== -1) handleDelete(index);
-            }}
+            onClick={() =>
+              deleteRecipe(recipes.findIndex((r) => r === selectedRecipe))
+            }
           >
             Löschen
           </button>
           <button onClick={() => setSelectedRecipe(null)}>Zurück</button>
+        </div>
+      )}
+
+      {/* Galerie */}
+      {!selectedRecipe && !showForm && (
+        <div style={{ display: "flex", flexWrap: "wrap", padding: "10px" }}>
+          {filtered.map((recipe, index) => (
+            <div
+              key={index}
+              className="recipe-card"
+              onClick={() => setSelectedRecipe(recipe)}
+              style={{ width: "200px" }}
+            >
+              {recipe.image && (
+                <img
+                  src={recipe.image}
+                  alt={recipe.title}
+                  style={{ width: "100%", borderRadius: "8px" }}
+                />
+              )}
+              <h3>{recipe.title}</h3>
+            </div>
+          ))}
         </div>
       )}
     </div>
