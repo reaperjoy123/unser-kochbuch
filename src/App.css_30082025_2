@@ -52,13 +52,3 @@ button:hover {
 .recipe-card:hover {
   transform: scale(1.02);
 }
-
-/* Eingabefelder immer untereinander */
-.recipe-card input[type="text"],
-.recipe-card textarea,
-.recipe-card input[type="file"],
-.recipe-card button {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-}
