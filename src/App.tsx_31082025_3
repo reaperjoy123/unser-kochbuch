@@ -163,15 +163,7 @@ function App() {
   return (
     <div>
       <header>
-        <img 
-		  src="/logo.png"
-		  alt="Logo"
-		  onClick={() => {
-		    setSelectedRecipe(null);
-			setEditIndex(null);
-		  }}
-		  style={{ cursor: "pointer" }}
-		/>
+        <img src="/logo.png" alt="Logo" />
         <h1>Unser Kochbuch</h1>
       </header>
 
