@@ -22,22 +22,6 @@ function App() {
 
   const ingredientsRef = useRef<HTMLTextAreaElement>(null);
   const instructionsRef = useRef<HTMLTextAreaElement>(null);
-  
-  const [shrinkHeader, setShrinkHeader] = useState(false);
-
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setShrinkHeader(true);
-      } else {
-        setShrinkHeader(false);
-      }
-    };
-
-  window.addEventListener("scroll", handleScroll);
-  return () => window.removeEventListener("scroll", handleScroll);
-}, []);
 
   // ✅ Rezepte aus localStorage laden
   useEffect(() => {
@@ -178,14 +162,13 @@ function App() {
 
   return (
     <div>
-      <header className={shrinkHeader ? "shrink" : ""}>
+      <header>
         <img 
 		  src="/logo.png"
 		  alt="Logo"
 		  onClick={() => {
 		    setSelectedRecipe(null);
 			setEditIndex(null);
-			setShowForm(false);
 		  }}
 		  style={{ cursor: "pointer" }}
 		/>

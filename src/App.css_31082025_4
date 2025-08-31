@@ -8,36 +8,17 @@ body {
 
 /* Header mit Logo */
 header {
-  position: sticky;       /* bleibt beim Scrollen sichtbar */
-  top: 0;                 /* immer oben */
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: 20px;
   background-color: #066437;
   color: white;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  z-index: 1000;          /* über den Inhalten */
-  transition: all 0.3s ease;
 }
 
 header img {
   height: 75px;
   margin-right: 15px;
-  transition: height 0.3s ease;
-}
-
-header.shrink img {
-  height: 40px;   /* verkleinertes Logo */
-}
-
-header h1 {
-  font-size: 2rem;
-  margin: 0;
-  transition: font-size 0.3s ease;
-}
-
-header.shrink h1 {
-  font-size: 1.2rem;   /* verkleinerte Schrift */
 }
 
 .recipe-image {
