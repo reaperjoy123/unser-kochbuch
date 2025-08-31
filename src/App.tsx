@@ -25,6 +25,8 @@ function App() {
   
   const [shrinkHeader, setShrinkHeader] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -206,13 +208,11 @@ function App() {
           </button>
           <button onClick={exportRecipes}>Exportieren</button>
 		  {/* Import-Button styled */}
-		  <label htmlFor="importFile">
-		    <button>Importieren</button>
-		  </label>
           <input
 		    id="importFile"
             type="file"
             accept="application/json"
+			ref={fileInputRef}
             onChange={(e) => {
 			  importRecipes(e);
 			  // Eingabefeld zurücksetzen, damit beim nächsten Klick wieder onChange ausgelöst wird
@@ -220,6 +220,12 @@ function App() {
 			}}
             style={{ display: "none" }}
           />
+		  <button
+		    type="button"
+			onClick={() => fileInputRef.current?.click()}
+		  >
+		    Importieren
+		  </button>
           <input
             type="text"
             placeholder="Suche..."
