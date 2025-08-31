@@ -176,33 +176,31 @@ function App() {
       </header>
 
       {/* Toolbar */}
-	  {!selectedRecipe && editIndex === null && (
-        <div style={{ padding: "15px" }}>
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setEditIndex(null);
-              setNewRecipe({ title: "", ingredients: "", instructions: "" });
-            }}
-          >
-            Rezept hinzufügen
-          </button>
-          <button onClick={exportRecipes}>Exportieren</button>
-          <input
-            type="file"
-            accept="application/json"
-            onChange={importRecipes}
-            style={{ marginLeft: "10px" }}
-          />
-          <input
-            type="text"
-            placeholder="Suche..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ marginLeft: "10px", padding: "5px" }}
-          />
-        </div>
-	  )}
+      <div style={{ padding: "15px" }}>
+        <button
+          onClick={() => {
+            setShowForm(true);
+            setEditIndex(null);
+            setNewRecipe({ title: "", ingredients: "", instructions: "" });
+          }}
+        >
+          Rezept hinzufügen
+        </button>
+        <button onClick={exportRecipes}>Exportieren</button>
+        <input
+          type="file"
+          accept="application/json"
+          onChange={importRecipes}
+          style={{ marginLeft: "10px" }}
+        />
+        <input
+          type="text"
+          placeholder="Suche..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ marginLeft: "10px", padding: "5px" }}
+        />
+      </div>
 
       {/* Formular */}
       {showForm && (
