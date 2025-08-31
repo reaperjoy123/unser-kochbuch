@@ -250,10 +250,8 @@ function App() {
           )}
           <h3>Zutaten</h3>
 		  <p className="recipe-text">{selectedRecipe.ingredients}</p>
-          <pre>{selectedRecipe.ingredients}</pre>
           <h3>Anleitung</h3>
 		  <p className="recipe-text">{selectedRecipe.instructions}</p>
-          <pre>{selectedRecipe.instructions}</pre>
           <button
             onClick={() => {
               const index = recipes.findIndex((r) => r === selectedRecipe);
