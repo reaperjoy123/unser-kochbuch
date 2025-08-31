@@ -205,16 +205,11 @@ function App() {
             Rezept hinzufügen
           </button>
           <button onClick={exportRecipes}>Exportieren</button>
-		  {/* Import-Button styled */}
-		  <label htmlFor="importFile">
-		    <button>Importieren</button>
-		  </label>
           <input
-		    id="importFile"
             type="file"
             accept="application/json"
             onChange={importRecipes}
-            style={{ display: "none" }}
+            style={{ marginLeft: "10px" }}
           />
           <input
             type="text"
