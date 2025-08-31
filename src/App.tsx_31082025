@@ -245,7 +245,7 @@ function App() {
             <img
               src={selectedRecipe.image}
               alt={selectedRecipe.title}
-              className="recipe-image"
+              style={{ width: "100%", borderRadius: "8px" }}
             />
           )}
           <h3>Zutaten</h3>

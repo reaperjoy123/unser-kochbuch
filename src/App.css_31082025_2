@@ -21,16 +21,6 @@ header img {
   margin-right: 15px;
 }
 
-.recipe-image {
-  max-width: 100%;      /* Bild passt in den Container */
-  height: auto;         /* Seitenverhältnis bleibt erhalten */
-  display: block;
-  margin: 0 auto;       /* Bild mittig */
-  border-radius: 8px;   /* gleiche Optik wie Gallery */
-  object-fit: cover;    /* schneidet ggf. überstehende Ränder ab */
-}
-
-
 /* Buttons */
 button {
   background: #066437;
