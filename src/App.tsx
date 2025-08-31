@@ -213,7 +213,11 @@ function App() {
 		    id="importFile"
             type="file"
             accept="application/json"
-            onChange={importRecipes}
+            onChange={(e) => {
+			  importRecipes(e);
+			  // Eingabefeld zurücksetzen, damit beim nächsten Klick wieder onChange ausgelöst wird
+			  (e.target as HTMLInputElement).value = "";
+			}}
             style={{ display: "none" }}
           />
           <input
