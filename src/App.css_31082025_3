@@ -72,10 +72,3 @@ button:hover {
   width: 100%;
   margin-bottom: 10px;
 }
-
-.recipe-text {
-  white-space: pre-wrap;  /* Zeilenumbrüche und Umbrüche am Rand */
-  word-wrap: break-word;  /* Lange Wörter umbrechen */
-  overflow-wrap: break-word;
-  max-width: 100%;        /* Text bleibt im Container */
-}
